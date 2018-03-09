@@ -1,0 +1,8 @@
+https://github.com/jschendel/bioinformatics-algorithms-coursera/blob/master/Assignment_02E.py
+
+
+http://stackoverflow.com/questions/20197205/algorithm-optimization-to-find-possible-aminoacid-sequences-with-total-mass-m
+
+http://nbviewer.ipython.org/github/finiterank/iPython-Notebooks/blob/master/Stepic.ipynb
+
+http://www.researchgate.net/post/Can_anyone_help_with_counting_the_number_of_linear_peptides
