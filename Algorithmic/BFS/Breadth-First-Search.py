@@ -73,14 +73,12 @@ def BFS(tree, f, goal):
         # get a node to visit. keep track of the path up to node
         (node, path) = queue.pop(0)
         if node in tree:
-            if node not in visited:
-                visited.append(node)
-                # add node children to queue
-                for child in tree[node]:
-                    if child == goal:
-                        path.append(child)
-                        return len(path) -1
-                    else:
+            # add node children to queue
+            for child in tree[node]:
+                if child == goal:
+                    path.append(child)
+                    return len(path) -1
+                else:
                         queue.append((child, path + [child]))
         else:
             if node == goal:
