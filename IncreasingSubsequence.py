@@ -212,9 +212,6 @@ def LongestDecreasingSubSequence(A):
     '''
     
     
-    
-
-
 # STRATEGY:
 #   Illustrating by finding
 #   a longest decreasing subsequence of [5,0,3,2,1,8]:
@@ -240,26 +237,143 @@ def LongestDecreasingSubSequence(A):
       # use a list to store 
 
 
+### NEED TO RECORD POSITION IN THE ARRAY WHERE TO START LOOPING OVER
+### ALSO LOOP OVER ALL VALUES OF D[LS]
+### BUT NEED TO REMEMBER THE INDEX OF THE LAST ELEMENT OF THE SUBSEQUENCE TO START SEARCHING FROM THERE      
+      
+      
+    # start by finding all subsequences of size 1
+    Seqs = {i:[A[i]] for i in range(len(A))}
+    # set the length of the longest subsequence 
+    LS = 0
+    newLS = 1
+    # create a dict to store the subsequence of given size
+    D = {}
+    D[LS] = Seqs
+    
+    while newLS > LS:
+        LS = list(D.keys())[0]    
+        #print(LS, newLS)
+        for i in D[LS]:
+            for j in range(i+1, len(A)):
+                #print('i', i, 'j', j, A[j], D[LS][i][-1])
+                if A[j] < D[LS][i][-1]:
+                    #print(LS, j, i, 'found a smaller value', A[j], D[LS][i][-1])
+                    newLS = LS + 1
+                    if newLS not in D:
+                        D[newLS] = {}
+                    D[newLS][j] = D[LS][i] + [A[j]]
+        
+        #print(D)    
+        if newLS > LS:
+            #print('found greater')
+            #print('LS', LS, 'newLS', newLS)
+            del D[LS]
+        #print(D)
+    return D
 
 
-    m = [1] * len( A )
+#    # start by finding all subsequences of size 1
+#    Seqs = {i:[A[i]] for i in range(len(A))}
+#    # set the length of the longest subsequence 
+#    LS = 0
+#    newLS = 1
+#    # create a dict to store the subsequence of given size
+#    D = {}
+#    D[LS] = Seqs
+#    
+#    while newLS > LS:
+#        LS = list(D.keys())[0]    
+#        print(LS, newLS)
+#        for i in D[LS]:
+#            # use binary search to find a lower value
+#            L, R = i+1, n-1
+#            while L <= R:
+#                m = math.floor((L + R) / 2)
+#                if A[m] < D[LS][i][-1]:
+#                    # 
+#                    
+#                    
+#                # check if target T is on the right or the left of m
+#        if A[m] < T:
+#            # T on the right of m
+#            # set L and R to create a new array on the right
+#            L = m + 1
+#        elif A[m] > T:
+#            # T on the left of m, set L and R to create a new array on the left
+#            R = m - 1
+#        elif A[m] == T:
+#            # target found
+#            return m
+#    # if L > R the entire array has been searched and target is not found
+#    return -1
+#
+#
+#
+#
+#
+#
+#            
+#            
+#            
+#            for j in range(i+1, len(A)):
+#                if A[j] < D[LS][i][-1]:
+#                    print(LS, j, i, 'found a smaller value', A[j], D[LS][i][-1])
+#                    newLS = LS + 1
+#                    if newLS not in D:
+#                        D[newLS] = {}
+#                    D[newLS][j] = D[LS][i] + [A[j]]
+#        #print(D)    
+#        if newLS > LS:
+#            #print('found greater')
+#            #print('LS', LS, 'newLS', newLS)
+#            del D[LS]
+#        #print(D)
+#    return D
 
-    for x in range(len(A)):
-        for y in range(x):
-            print(x, y, m[x], m[y], A[x], A[y])
-            if m[y] >= m[x] and A[y] > A[x]:
-                m[x]+=1
 
-    max_value = max(m)
 
-    result = []
-    for i in range(len(m)-1,-1,-1):
-        if max_value == m[i]:
-            result.append(A[i])
-            max_value-=1
 
-    result.reverse()
-    return result
+
+
+
+
+
+
+
+def SolveOb(PbFile):
+    
+    infile = open(PbFile)
+    infile.readline()
+    L = list(map(lambda x: str(x), infile.readline().rstrip().split()))
+    infile.close()
+    LDS = LongestDecreasingSubSequence(L)
+    print(' '.join(list(list(LDS.values())[0].values())[0]))
+
+
+
+
+
+
+
+#    m = [1] * len( A )
+#
+#    for x in range(len(A)):
+#        for y in range(x):
+#            print(x, y, m[x], m[y], A[x], A[y])
+#            if m[y] >= m[x] and A[y] > A[x]:
+#                m[x]+=1
+#
+#    max_value = max(m)
+#
+#    result = []
+#    for i in range(len(m)-1,-1,-1):
+#        if max_value == m[i]:
+#            result.append(A[i])
+#            max_value-=1
+#
+#    result.reverse()
+#    return result
 
 
 
