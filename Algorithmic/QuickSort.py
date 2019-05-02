@@ -35,10 +35,10 @@ def ThreeWayPartition(A):
             A.insert(j, A.pop(i))
             
     m = j + A.count(K)
-    return A[:j], A[j:m], A[m:]
+    #return A[:j], A[j:m], A[m:]
+    return j, m
 
-
-def QuickSort(A):
+def QuickSort(A, j, m):
     '''
     
     
@@ -49,15 +49,17 @@ def QuickSort(A):
     
     '''
     
-    
-    a, b, c = ThreeWayPartition(A)
-    print(a, b , c)
-    QuickSort(a)
-    
-    
+    if j < m:
+        j, m = ThreeWayPartition(A)
+        if len(A[:j]) != 0:
+            QuickSort(A[:j], j, m)
+        if len(A[m:]) != 0:
+            QuickSort(A[m:], j, m)
+        A = A[:j] + A[j:m] + A[m:]
+        return A
     
 A = [5, -2, 4, 7, 8, -10, 11]    
-QuickSort(A)    
+QuickSort(A, 0, len(A))    
 print(A)
 
 def SolvePb(PbFile):
