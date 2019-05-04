@@ -8,7 +8,7 @@ Created on Thu May  2 22:57:55 2019
 #
 #https://stackoverflow.com/questions/51373300/how-to-convert-newick-tree-format-to-a-tree-like-hierarchical-objectideas about parsing newick tree
 
-
+# https://github.com/sjspielman/pyvolve/blob/master/src/newick.py
 
 import re
 
