@@ -14,7 +14,7 @@ Created on Fri May  3 17:12:32 2019
 
 
 import copy
-
+import random
 
 # convert list into dict
 def ReadMatrix(L):
@@ -98,12 +98,12 @@ def AdditivePhylogeny(M, n):
     
     '''
     
-    
+    print('n', n)
     
     
     if n == 1:
         # return the tree consisting of a single edge of length D1,2
-        return {0:{1:M[0][1]}}
+        return {0:{1:M[0][1]}, 1: {0:M[1][0]}}
     
     # compute distance between n and its parent node
     d = ComputeLimbLength(n, M)
@@ -111,49 +111,116 @@ def AdditivePhylogeny(M, n):
     # by substracting d to each element in row n and column n 
     M = ComputeDBald(M, n, d)
         
+    print(n, d)
+    #print(M)
+    
+    
     # find node i and k such that Di,k = Di,n + Dn,k    
     x = -1
     trio = []
+    
+    Found = False
     for i in M:
-        for k in M:
-            if i != n and k != n and i != k:
-                if M[i][k] == M[i][n] + M[n][k]:
-                    trio.append([i, n, k])
+        if Found == False:
+            for k in M:
+                if i != n and k != n and i != k:
+                    if M[i][k] == M[i][n] + M[n][k]:
+                        trio.append([i, n, k])
+                        Found = True
+                        break
+    print('trio', trio)
     trio = trio[0]
+    
+    #print(trio)
+    
     # get the distance between i and n
-    i, x = M[i][n], trio[0]
+    x, y, i, k = M[i][n], M[n][k], trio[0], trio[-1]
+    
+    print('node', 'distance', i, x)
     
     # compute Dtrim by removing row n and column n from M
-    Dtrim = copy.deepcopy(M)
+    Dtrim = M
     del Dtrim[n]
     for i in Dtrim:
         del Dtrim[i][n]
+        
+    #$print(Dtrim)    
+    
     # compute the tree corresonding to Dtrim
     T = AdditivePhylogeny(Dtrim, n - 1)
+    
+    print('tree', T)
+    
     
     # check if a node exists at distance x from i
     # if not, create a new node and attach n
     # if exists, attach n to that node
     
-    # make a list of internal nodes
-    internal = [node for node in T if len(T[node]) > 1]
-    internal.sort()
-    if len(internal) == 0:
-        # new node label
-        v = 0
-    else:
-        v = internal[-1] + 1
+#    # make a list of internal nodes
+#    internal = [node for node in T if len(T[node]) > 1]
+#    internal.sort()
+#    if len(internal) == 0:
+#        # new node label
+#        v = 0
+#    else:
+#        v = internal[-1] + 1
     
     
-    for j in Dtrim[i]:
-        if Dtrim[i][j] == x:
-            # add n to j
-            T[j][n] = d
-        else:
-            # create new node
-            T[v] = {n:d}
+#    # find the node where to attach n
+#    if x == 0:
+#        # node is i
+#        T[i][n] = d
+#        if n not in T:
+#            T[n] = {}
+#        T[n][i] = d
+##    else:
+##        Found = False
+##        for j in Dtrim[i]:
+##            if Dtrim[i][j] == x:
+##                # add n to j
+##                T[j][n] = d
+##                if n not in T:
+##                    T[n] = {}
+##                T[n][j] = d
+##                Found = True
+##                break
+##        if Found == False:
+##            v = n + 1
+##            # create new node
+##            T[v] = {n:d}
+##            if n not in T:
+##                T[n] = {}.add({v:d})
+##            T[n][i] = d
+#
+#
+#    else:
+#        v = n + 1
+#        # create new node
+#        T[v] = {n:d}
+#        if n not in T:
+#            T[n] = {}
+#        T[n][i] = d
+
+    v = str(n + 1)
+    print('new node', n)
+    # create new node
+    T[v] = {n:d}
+    if n not in T:
+        T[n] = {}
+    T[n][i] = d
+    T[i][v] = x
+    T[v][i] = x
+    T[v][k] = y
+    T[k][v] = y
     
-    print(n, T)        
+    
+    
+   
+
+    
+#    T[v] = {n:d}
+    
+    print('tree after attach', T)        
     return T
 
 
@@ -181,3 +248,14 @@ def AdditivePhylogeny(M, n):
 #5->4:4
 #5->3:7
 #5->2:6
+    
+
+L = [[0, 13, 21, 22],
+[13, 0, 12, 13],
+[21, 12, 0, 13],
+[22, 13, 13, 0]]
+
+
+M = ReadMatrix(L)
+Tree = AdditivePhylogeny(M, 3)
+print(Tree)
