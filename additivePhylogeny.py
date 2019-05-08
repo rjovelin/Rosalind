@@ -13,9 +13,6 @@ Created on Fri May  3 17:12:32 2019
 # AdditivePhylogeny selects leaf n (corresponding to the last row and column of D).
 
 
-import copy
-import random
-
 # convert list into dict
 def ReadMatrix(L):
     '''
@@ -60,21 +57,13 @@ def ComputeLimbLength(leaf, M):
     return min(D)    
 
 
-def SelectLeaf(M):
+def ComputeDBald(M, n, d):
     '''
-    (dict) -> int
-    Return the leaf corresponding to the last row and column of M
-    Precondition: leafs are labeled with integers
+    (dict, int, int) -> dict
+    Return a modified distance matrix M in which the limb distance d of n is
+    substracted from the distance of all leafs
     '''
     
-    a = M.keys()
-    a.sort()
-    return a[-1]
-
-
-
-
-def ComputeDBald(M, n, d):
     for i in M[n]:
         if i != n:
             M[n][i] = M[n][i] - d
@@ -84,21 +73,102 @@ def ComputeDBald(M, n, d):
     return M
 
 
+def FindLeaves(M, n):
+    '''
+    (list) -> list
+    Find leafs i and k such that Di,k = Di,n + Dn,k
+    '''
+    trio = []
+    for i in M:
+        for k in M:
+            if M[i][k] == M[i][n] + M[n][k]:
+                trio.append([i, k])
+    return trio[0]
+    
+
+def TrimMatrix(M, n):
+    '''
+    (dict, int) -> dict
+    Return a modified distance matrix M trimmed of n in columns and rows
+    '''
+    
+    del M[n]
+    for i in M:
+        del M[i][n]
+    return M
 
 
+def BFS(tree, f, goal):
+    '''
+    (dict, str, str) -> list
+    Take a dictionary representing with interactions among node, and return
+    a list of nodes representing the path betwen nodes f and goal
+    '''
+    # create a queue to add the discovered nodes that are not yet visited
+    # keep track of the path visited to reach discovered node
+    queue = [(f, [f])]
+    visited = []
+    while len(queue) != 0:
+        # get a node to visit. keep track of the path up to node
+        (node, path) = queue.pop(0)
+        if node not in visited:
+            visited.append(node)
+            # add node children to queue
+            for child in tree[node]:
+                if child == goal:
+                    path.append(child)
+                    return path
+                else:
+                    queue.append((child, path + [child]))
+
+
+def CumulativeDistanceDistanceBetweenLeaves(tree, f, goal):
+    '''
+    (dict, int, int) -> list
+    Return a list of distances from leaf f to all nodes on the path between f
+    and goal in Tree. 
+    Precondition: there is at least 1 internal node between f and goal
+    '''
+    
+    path = BFS(tree, f, goal)
+    D = []
+    d = 0
+    if f == goal:
+        D = [d]
+    else:
+        for i in range(len(path)-1):
+            d = d + tree[path[i]][path[i+1]]
+            D.append(d)
+    return D
+
+
+
+def FindAttachmentNode(Distances, path, d):
+    '''
+    (list, list, int) -> list
+    Take the list of Distances between i and all nodes on the path between i and k,
+    a path with all nodes between leafs i and k included, and the limb distance
+    of leaf n to its parent node
+    Return a list with node representing the path node-k where to attach a new node,
+    the distance between i and node, and the distance between node and k
+    '''
+    
+    
+    for i in range(len(Distances)):
+        nodes = [path[0], path[i+1]]
+        if d > Distances[i]:
+            # get the node where to attach n between node and k
+            # get the distance between i and node and distance between node and k
+            return [nodes[-1], d - Distances[i], Distances[-1] - d]
+    
 
 def AdditivePhylogeny(M, n):
     '''
-    
     Given: n and a tab-delimited n x n additive matrix.
     Return: A weighted adjacency list for the simple tree fitting this matrix.
-
-    
-    
-    
     '''
     
-    print('n', n)
+    print('n:', n)
     
     
     if n == 1:
@@ -111,117 +181,122 @@ def AdditivePhylogeny(M, n):
     # by substracting d to each element in row n and column n 
     M = ComputeDBald(M, n, d)
         
-    print(n, d)
+    #print('n,d:', n, d)
     #print(M)
     
-    
     # find node i and k such that Di,k = Di,n + Dn,k    
-    x = -1
-    trio = []
+    i, k = FindLeaves(M, n)
+       
+    #print('i, k:', [i, k])
     
-    Found = False
-    for i in M:
-        if Found == False:
-            for k in M:
-                if i != n and k != n and i != k:
-                    if M[i][k] == M[i][n] + M[n][k]:
-                        trio.append([i, n, k])
-                        Found = True
-                        break
-    print('trio', trio)
-    trio = trio[0]
+    # get the distance between i and n, and between n and k
+    x, y = M[i][n], M[n][k] 
     
-    #print(trio)
-    
-    # get the distance between i and n
-    x, y, i, k = M[i][n], M[n][k], trio[0], trio[-1]
-    
-    print('node', 'distance', i, x)
+    #print('distance {0}_{1}'.format(i, n), x)
+    #print('distance {0}_{1}'.format(n,k), y)
     
     # compute Dtrim by removing row n and column n from M
-    Dtrim = M
-    del Dtrim[n]
-    for i in Dtrim:
-        del Dtrim[i][n]
-        
+    Dtrim = TrimMatrix(M, n)
+            
     #$print(Dtrim)    
     
     # compute the tree corresonding to Dtrim
     T = AdditivePhylogeny(Dtrim, n - 1)
     
-    print('tree', T)
+    #print('tree', T)
+    
+    # check if need to create new node
+    if x != 0:
+        
+        #print('i, k for insertion', i, k)
+        #print('distance to attach {0} from i'.format(n), x)
+        
+        # create new node
+        v = str(n+2)
+        #print('new node', v)
+        #print('tree before insertion', T)
+        # insert v between i and k at distance x from i
+        # find the path between i and k to determine where to insert n
+        path = BFS(T, i, k)
+        # insert v between i and k if no node in between
+        if k in T[i]:
+            del T[i][k]
+            del T[k][i]
+            T[v] = {n:d}
+            if n not in T:
+                T[n] = {}
+            T[n][v] = d
+            T[v][i] = x
+            T[i][v] = x
+            T[v][k] = y
+            T[k][v] = y
+        else:
+            
+            path = BFS(T, i, k)
+            # find where to attach v between i and k
+            # comptute distance between i and each node in the path between i and k
+            D = CumulativeDistanceDistanceBetweenLeaves(T, i, k)
+            #print('=====')
+            #print('trying to find attachement point')
+            #print('n=', n)
+            #print('path', path)
+            #print('distances', D)
+            #print('d', d)
+            #print('=====')
+            
+            
+            node, X, Y = FindAttachmentNode(D, path, x)
+            
+            print('=====')
+            print('trying to find attachement point')
+            print('n=', n)
+            print('path', path)
+            print('distances', D)
+            print('d', d)
+            print('node, distances', node, X, Y)
+            print('=====')
+            
+            # insert between node and k
+            del T[node][k]
+            del T[k][node]
+            T[v] = {n:d}
+            if n not in T:
+                T[n] = {}
+            T[n][v] = d
+            T[v][k] = Y
+            T[k][v] = Y
+            T[v][node] = X
+            T[node][v] = X
+            
+            
+    else:
+        # attach n to i 
+        T[i][n] = d
+        T[n][i] = d
     
     
-    # check if a node exists at distance x from i
-    # if not, create a new node and attach n
-    # if exists, attach n to that node
-    
-#    # make a list of internal nodes
-#    internal = [node for node in T if len(T[node]) > 1]
-#    internal.sort()
-#    if len(internal) == 0:
-#        # new node label
-#        v = 0
-#    else:
-#        v = internal[-1] + 1
-    
-    
-#    # find the node where to attach n
-#    if x == 0:
-#        # node is i
-#        T[i][n] = d
-#        if n not in T:
-#            T[n] = {}
-#        T[n][i] = d
-##    else:
-##        Found = False
-##        for j in Dtrim[i]:
-##            if Dtrim[i][j] == x:
-##                # add n to j
-##                T[j][n] = d
-##                if n not in T:
-##                    T[n] = {}
-##                T[n][j] = d
-##                Found = True
-##                break
-##        if Found == False:
-##            v = n + 1
-##            # create new node
-##            T[v] = {n:d}
-##            if n not in T:
-##                T[n] = {}.add({v:d})
-##            T[n][i] = d
-#
-#
-#    else:
-#        v = n + 1
-#        # create new node
-#        T[v] = {n:d}
-#        if n not in T:
-#            T[n] = {}
-#        T[n][i] = d
-
-    v = str(n + 1)
-    print('new node', n)
-    # create new node
-    T[v] = {n:d}
-    if n not in T:
-        T[n] = {}
-    T[n][i] = d
-    T[i][v] = x
-    T[v][i] = x
-    T[v][k] = y
-    T[k][v] = y
-    
-    
-    
-   
-
-    
-#    T[v] = {n:d}
-    
+       
     print('tree after attach', T)        
     return T
+
+
+
+
+
+
+def Format(Tree):
+    L = list(Tree.keys())
+    L.sort()
+    for i in L:
+        for j in Tree[i]:
+            print(str(i) + '->' + str(j) + ':' + str(int(Tree[i][j]))) 
+
+
+
+
+
+
+
 
 
 #Additive Phylogeny Problem
@@ -250,12 +325,40 @@ def AdditivePhylogeny(M, n):
 #5->2:6
     
 
-L = [[0, 13, 21, 22],
-[13, 0, 12, 13],
-[21, 12, 0, 13],
-[22, 13, 13, 0]]
+#L = [[0, 13, 21, 22],
+#[13, 0, 12, 13],
+#[21, 12, 0, 13],
+#[22, 13, 13, 0]]
 
 
-M = ReadMatrix(L)
-Tree = AdditivePhylogeny(M, 3)
-print(Tree)
+def GetMatrixFromFile(PbFile):
+    '''
+    (file) -> list
+    Read file and return a list with distances among leafs 
+    '''
+    infile = open(PbFile)
+    infile.readline()
+    L = []
+    for line in infile:
+        if line.rstrip() != '':
+            line = line.rstrip().split()
+            L.append(list(map(lambda x: int(x), line)))
+    infile.close()
+    return L
+
+
+def SolvePb(PbFile):
+    # get matrix from file
+    L = GetMatrixFromFile(PbFile)
+    # convert list to dictionary
+    M = ReadMatrix(L)
+    # find the last node in matrix to start with
+    leafs = list(M.keys())
+    leafs.sort()
+    n = leafs[-1]
+    # use additive phylogeny to reconstruct the tree
+    Tree = AdditivePhylogeny(M, n)
+    Format(Tree)
+
+
+
